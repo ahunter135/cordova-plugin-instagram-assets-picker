@@ -95,8 +95,8 @@
     {
         self.videoStartMaskView =[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"InstagramAssetsPicker.bundle/Start"] ];
         //FIXME: should use constraint
-        self.videoStartMaskView.frame = CGRectMake(self.superview.frame.size.width / 2 + self.superview.frame.origin.x - 25, self.superview.frame.size.height / 2 + self.superview.frame.origin.y - 25, 50, 50);
-        [self.superview addSubview:self.videoStartMaskView];
+        self.videoStartMaskView.frame = CGRectMake(0, 0, 0, 0);
+
         self.videoStartMaskView.hidden = YES;
     }
     return _videoStartMaskView;
@@ -393,6 +393,7 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
 
 - (void)setPhAsset:(PHAsset *)asset
 {
+    [self.videoPlayer stop];
     _phAsset = asset;
     _mediaType = [asset mediaType];
 
@@ -483,7 +484,7 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self addSubview:self.videoPlayer.view];
-                [self.videoPlayer play];
+                //[self.videoPlayer play];
                 [self configureForImageSize:self.videoPlayer.view.frame.size];
 
                 _playState = 1;

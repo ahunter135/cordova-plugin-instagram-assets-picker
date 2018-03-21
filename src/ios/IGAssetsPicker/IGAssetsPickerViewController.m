@@ -93,7 +93,7 @@
 - (UIView *)topView {
     if (_topView == nil) {
         CGFloat handleHeight = 44.0f;
-        CGRect rect = CGRectMake(0, 0, CGRectGetWidth(self.view.bounds), CGRectGetWidth(self.view.bounds)+handleHeight*2);
+        CGRect rect = CGRectMake(0, 0, CGRectGetWidth(self.view.bounds), handleHeight);
         self.topView = [[UIView alloc] initWithFrame:rect];
         self.topView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin;
         self.topView.backgroundColor = [UIColor clearColor];
@@ -127,39 +127,40 @@
         [cropBtn setTitleColor:[UIColor cyanColor] forState:UIControlStateNormal];
         [cropBtn addTarget:self action:@selector(cropAction) forControlEvents:UIControlEventTouchUpInside];
         [navView addSubview:cropBtn];
+        /*
+         rect = CGRectMake(0, CGRectGetHeight(self.topView.bounds)-handleHeight, CGRectGetWidth(self.topView.bounds), handleHeight);
+         UIView *dragView = [[UIView alloc] initWithFrame:rect];
+         dragView.backgroundColor = navView.backgroundColor;
+         dragView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
+         [self.topView addSubview:dragView];
 
-        rect = CGRectMake(0, CGRectGetHeight(self.topView.bounds)-handleHeight, CGRectGetWidth(self.topView.bounds), handleHeight);
-        UIView *dragView = [[UIView alloc] initWithFrame:rect];
-        dragView.backgroundColor = navView.backgroundColor;
-        dragView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
-        [self.topView addSubview:dragView];
+         UIImage *img = [UIImage imageNamed:@"InstagramAssetsPicker.bundle/cameraroll-picker-grip"];
+         rect = CGRectMake((CGRectGetWidth(dragView.bounds)-img.size.width)/2, (CGRectGetHeight(dragView.bounds)-img.size.height)/2, img.size.width, img.size.height);
+         UIImageView *gripView = [[UIImageView alloc] initWithFrame:rect];
+         gripView.image = img;
+         [dragView addSubview:gripView];
 
-        UIImage *img = [UIImage imageNamed:@"InstagramAssetsPicker.bundle/cameraroll-picker-grip"];
-        rect = CGRectMake((CGRectGetWidth(dragView.bounds)-img.size.width)/2, (CGRectGetHeight(dragView.bounds)-img.size.height)/2, img.size.width, img.size.height);
-        UIImageView *gripView = [[UIImageView alloc] initWithFrame:rect];
-        gripView.image = img;
-        [dragView addSubview:gripView];
+         UIPanGestureRecognizer *panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGestureAction:)];
+         [dragView addGestureRecognizer:panGesture];
 
-        UIPanGestureRecognizer *panGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGestureAction:)];
-        [dragView addGestureRecognizer:panGesture];
+         UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGestureAction:)];
+         [dragView addGestureRecognizer:tapGesture];
 
-        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGestureAction:)];
-        [dragView addGestureRecognizer:tapGesture];
-
-        [tapGesture requireGestureRecognizerToFail:panGesture];
-
+         [tapGesture requireGestureRecognizerToFail:panGesture];
+         */
         rect = CGRectMake(0, handleHeight, CGRectGetWidth(self.topView.bounds), CGRectGetHeight(self.topView.bounds)-handleHeight*2);
         self.cropView = [[IGCropView alloc] initWithFrame:rect];
         [self.topView addSubview:self.cropView];
         [self.topView sendSubviewToBack:self.cropView];
+        /*
+         if (self.showGrid) {
+         self.maskView = [[UIImageView alloc] initWithFrame:rect];
+         self.maskView.image = [UIImage imageNamed:@"InstagramAssetsPicker.bundle/straighten-grid"];
 
-        if (self.showGrid) {
-            self.maskView = [[UIImageView alloc] initWithFrame:rect];
-            self.maskView.image = [UIImage imageNamed:@"InstagramAssetsPicker.bundle/straighten-grid"];
-
-            UIPanGestureRecognizer *cropViewPanGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(cropViewPanGestureAction:)];
-            [self.cropView addGestureRecognizer:cropViewPanGesture];
-        }
+         UIPanGestureRecognizer *cropViewPanGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(cropViewPanGestureAction:)];
+         [self.cropView addGestureRecognizer:cropViewPanGesture];
+         }
+         */
     }
     return _topView;
 }
@@ -197,23 +198,11 @@
 }
 
 - (void)cropAction {
-    if (cropAfterSelect)
+    if(self.delegate && [self.delegate respondsToSelector:@selector(IGAssetsPickerGetCropRegion: withPhAsset:)])
     {
-        if(self.delegate && [self.delegate respondsToSelector:@selector(IGAssetsPickerFinishCroppingToAsset:)])
-        {
-            [self.cropView cropAsset:^(id asset) {
-                [self.delegate IGAssetsPickerFinishCroppingToAsset:asset];
-            }];
-        }
-    }
-    else
-    {
-        if(self.delegate && [self.delegate respondsToSelector:@selector(IGAssetsPickerGetCropRegion: withPhAsset:)])
-        {
-            [self.cropView getCropRegion:^(CGRect rect) {
-                [self.delegate IGAssetsPickerGetCropRegion:rect withPhAsset:self.cropView.phAsset];
-            }];
-        }
+        [self.cropView getCropRegion:^(CGRect rect) {
+            [self.delegate IGAssetsPickerGetCropRegion:rect withPhAsset:self.cropView.phAsset];
+        }];
     }
 
     [self.cropView stopPlayingIfNecessary];
@@ -292,17 +281,7 @@
 }
 
 - (void)tapGestureAction:(UITapGestureRecognizer *)tapGesture {
-    CGRect topFrame = self.topView.frame;
-    topFrame.origin.y = topFrame.origin.y == 0 ? -(CGRectGetHeight(self.topView.bounds)-20-44) : 0;
 
-    CGRect collectionFrame = self.collectionView.frame;
-    collectionFrame.origin.y = CGRectGetMaxY(topFrame);
-    collectionFrame.size.height = CGRectGetHeight(self.view.bounds) - CGRectGetMaxY(topFrame);
-    [UIView animateWithDuration:.3f animations:^{
-        self.topView.frame = topFrame;
-        self.collectionView.frame = collectionFrame;
-
-    }];
 }
 
 #pragma mark - Collection View Data Source
